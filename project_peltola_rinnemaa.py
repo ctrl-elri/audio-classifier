@@ -1,5 +1,6 @@
 import numpy as np
 import librosa as lb
+import librosa.feature
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC  # Example classifier, use any desired classifier
 
@@ -24,6 +25,13 @@ time_features = []
 for data in normalized_data:
     # Extract time-domain features (e.g., zero-crossing rate, rms, etc.)
     # Append features to the time_features list.
+    zero_crossing_rate = librosa.feature.zero_crossing_rate(data).ravel()
+    rms = librosa.feature.rms(data).ravel()
+
+    # Append extracted features to the time_features list
+    time_features.append([zero_crossing_rate, rms])
+
+
 
 # 5. Extract frequency-domain features
 # Use Fourier Transform to convert data to frequency domain and extract features.
@@ -31,6 +39,14 @@ frequency_features = []
 for data in normalized_data:
     # Apply Fourier Transform and extract frequency-domain features
     # Append features to the frequency_features list.
+    stft = np.abs(librosa.stft(data))
+
+    # Extracting frequency-domain features (e.g., spectral centroid, bandwidth)
+    spectral_centroids = librosa.feature.spectral_centroid(S=stft).ravel()
+    spectral_bandwidth = librosa.feature.spectral_bandwidth(S=stft).ravel()
+
+    # Append extracted features to the frequency_features list
+    frequency_features.append([spectral_centroids, spectral_bandwidth])
 
 # 6. Plot spectrograms and MFCC from some of the files and compare them
 # Use matplotlib or other plotting libraries to visualize spectrograms and MFCC.
