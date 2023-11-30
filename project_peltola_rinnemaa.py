@@ -3,11 +3,20 @@ import librosa as lb
 import librosa.feature
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC  # Example classifier, use any desired classifier
+import sounddevice as sd
+import soundfile as sf
 
 # 1. Data collection (Assuming you have a list of audio files)
 # You might use a library like librosa to handle audio data.
-audio_files = [...]  # List of paths to audio files
+audio1, fs1 = lb.load('Tallenna-001.wav')
+audio2, fs2 = lb.load('Tallenna-002.wav')
+audio3, fs3 = lb.load('Tallenna-003.wav')
+audio4, fs4 = lb.load('Tallenna-004.wav')
+audio5, fs5 = lb.load('Tallenna-005.wav')
 
+audio_files = [audio1, audio2, audio3, audio4, audio5]  # List of paths to audio files
+
+print('heimoi')
 # 2. Data conversion to wav file (If necessary, convert to WAV format)
 # This step may not be needed if your audio files are already in WAV format.
 
