@@ -8,11 +8,11 @@ import soundfile as sf
 
 # 1. Data collection (Assuming you have a list of audio files)
 # You might use a library like librosa to handle audio data.
-audio1, fs1 = lb.load('Tallenna-001.wav')
-audio2, fs2 = lb.load('Tallenna-002.wav')
-audio3, fs3 = lb.load('Tallenna-003.wav')
-audio4, fs4 = lb.load('Tallenna-004.wav')
-audio5, fs5 = lb.load('Tallenna-005.wav')
+audio1, fs1 = lb.load('Tallenna-001.wav', sr=None)
+audio2, fs2 = lb.load('Tallenna-002.wav', sr=None)
+audio3, fs3 = lb.load('Tallenna-003.wav', sr=None)
+audio4, fs4 = lb.load('Tallenna-004.wav', sr=None)
+audio5, fs5 = lb.load('Tallenna-005.wav', sr=None)
 
 audio_files = [audio1, audio2, audio3, audio4, audio5]  # List of paths to audio files
 
@@ -24,7 +24,7 @@ print('heimoi')
 # Normalize audio data using librosa or other signal processing libraries.
 normalized_data = []
 for file in audio_files:
-    data, sr = librosa.load(file)
+    #data, sr = librosa.load(file)
     normalized = librosa.util.normalize(data)
     normalized_data.append(normalized)
 
