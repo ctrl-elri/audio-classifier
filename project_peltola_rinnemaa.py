@@ -1,21 +1,62 @@
 import numpy as np
 import librosa as lb
 from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC  # Example classifier, use any desired classifier
+from sklearn.svm import SVC 
+from sklearn.metrics import accuracy_score
 import sounddevice as sd
 import soundfile as sf
 from scipy.signal import spectrogram
 import matplotlib.pyplot as plt
+import os
 
 # 1. Data collection (Assuming you have a list of audio files)
 # You might use a library like librosa to handle audio data.
-audio1, fs1 = lb.load('Tallenna-001.wav', sr=None)
-audio2, fs2 = lb.load('Tallenna-002.wav', sr=None)
-audio3, fs3 = lb.load('Tallenna-003.wav', sr=None)
-audio4, fs4 = lb.load('Tallenna-004.wav', sr=None)
-audio5, fs5 = lb.load('Tallenna-005.wav', sr=None)
 
+""""
+audio1, fs1 = lb.load('tram_samples/Tallenna-001.wav', sr=None)
+audio2, fs2 = lb.load('tramp_samples/Tallenna-002.wav', sr=None)
+audio3, fs3 = lb.load('tram_samples/Tallenna-003.wav', sr=None)
+audio4, fs4 = lb.load('tram_samples/Tallenna-004.wav', sr=None)
+audio5, fs5 = lb.load('tram_samples/Tallenna-005.wav', sr=None)
 audio_files = [audio1, audio2, audio3, audio4, audio5]  # List of paths to audio files
+
+"""
+
+# Reading audio data and storing samples in separate lists
+
+def read_file(file):
+    audio, fs = lb.load(file, sr=None)
+    return audio, fs   
+
+def get_bus_samples():
+    bus_samp = []
+
+    for filename in os.listdir('bus_samples'):
+        file_path = os.path.join('bus_samples', filename)
+        if os.path.isfile(file_path):
+            audio, fs = read_file(file_path)
+            bus_samp.append((audio, fs))
+
+    return bus_samp
+
+def get_tram_samples():
+    tram_samp = []
+
+    for filename in os.listdir('tram_samples'):
+        file_path = os.path.join('tram_samples', filename)
+        if os.path.isfile(file_path):
+            audio, fs = read_file(file_path)
+            tram_samp.append((audio, fs))
+    return tram_samp
+
+
+
+"""
+Jos nyt haluut pelkän datan noista tram_sampleista niinku audio_files, niin se menee jotakuinkin näin:
+for tram_sample in tram_samples:
+    audio_files.append(tram_sample[0])
+
+"""
 
 print(audio_files)
 # 2. Data conversion to wav file (If necessary, convert to WAV format)
@@ -125,10 +166,6 @@ for rms in rms_data:
     plt.hist(rms.flatten(), bins=20, color='blue', alpha=0.5, edgecolor='black')
 
 
-
-
-"""
-
 # 5. Extract frequency-domain features
 # Use Fourier Transform to convert data to frequency domain and extract features.
 frequency_features = []
@@ -156,21 +193,20 @@ for data in normalized_data:
 X = []  # Combine time and frequency features into X
 y = [...]  # Labels for your data
 
-# Split data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
 
-# Initialize and train the classifier
-classifier = SVC()
-classifier.fit(X_train, y_train)
+# Create SVM classifier
+svm_classifier = SVC(kernel='linear')
 
-# 8. Train the model (Already part of the previous step)
+# Train the SVM classifier
+svm_classifier.fit(X_train, y_train)
 
-# 9. Calculate results and analyze them
-# Use the trained model to predict on test data and analyze results
-predictions = classifier.predict(X_test)
-# Perform evaluation, calculate accuracy, confusion matrix, etc.
+# Make predictions on the test set
+predictions = svm_classifier.predict(X_test)
 
-# 10. Write report
-# Summarize your findings, results, and analysis in a report format using markdown or a document editor.
+# Calculate accuracy
+accuracy = accuracy_score(y_test, predictions)
+print("Accuracy:", accuracy)
 
-"""
+
