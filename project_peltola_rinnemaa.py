@@ -24,12 +24,22 @@ print(audio_files)
 # 3. Normalize the data
 # Normalize audio data using librosa or other signal processing libraries.
 normalized_data = []
-for audio in audio_files:
+for data in audio_files:
     #data, sr = librosa.load(file)
-    normalized = lb.util.normalize(audio)
+    normalized = lb.util.normalize(data)
     normalized_data.append(normalized)
 
-print(normalized_data)
+# 4. Extract time-domain features
+# Extract time-domain features using librosa or other signal processing libraries.
+time_features = []
+for data in normalized_data:
+    # Extract time-domain features (e.g., zero-crossing rate, rms, etc.)
+    # Append features to the time_features list.
+    zero_crossing_rate = lb.feature.zero_crossing_rate(data).ravel()
+    rms = librosa.feature.rms().ravel()
+
+    # Append extracted features to the time_features list
+    time_features.append([zero_crossing_rate, rms])
 
 
 
