@@ -4,6 +4,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC  # Example classifier, use any desired classifier
 import sounddevice as sd
 import soundfile as sf
+from scipy.signal import spectrogram
+import matplotlib.pyplot as plt
 
 # 1. Data collection (Assuming you have a list of audio files)
 # You might use a library like librosa to handle audio data.
@@ -33,6 +35,7 @@ print(normalized_data)
 
 hop_length = 256
 frame_length = 512
+win_size = int(0.1*fs1)
 
 # Extracting time-domain and frequency-domain features
 # Features: energy, RMS, spectrograms, log-spectrograms, mel-spectrograms, logmel-spectrograms, MFCCs, CQT spectrograms
@@ -61,7 +64,58 @@ for audio in normalized_data:
 
     rms_data.append(rms)
 
-    # Spectrogram
+    # Spectrogram1
+    spectrogram1 = np.abs(librosa.stft(audio, n_fft=win_size))
+
+    spectrogram_data.append(spectrogram1)
+
+    # Log-spectrogram1
+    log = 10 * np.log10(spectrogram1)
+
+    log_spectrogram_data.append(log)
+
+    """
+    # Spectrogram2
+    sample_rate = 44100
+
+    f, t, Sxx = spectrogram(audio, fs=sample_rate, nperseg=frame_length, noverlap=hop_length, nfft=win_size)
+    spectrogram_data.append(Sxx)
+
+    # Log-spectrogram2
+    log_spectrogram = np.log1p(Sxx)
+    log_spectrogram_data.append(log_spectrogram)
+    """
+
+    # Mel-spectrogram
+    mel_spectrogram = lb.feature.melspectrogram(y=audio, sr=sample_rate)
+    mel_spectrogram_data.append(mel_spectrogram)
+
+    # Log-mel-spectrogram
+    logmel_spectrogram = 10*np.log10(mel_spectrogram)
+    logmel_spectrogram_data.append(logmel_spectrogram)
+
+    # MFCCs
+    mfccs = lb.feature.mfcc(y=audio, sr=sample_rate)
+    mfccs_data.append(mfccs)
+
+    # CQT spectrogram
+    CQT_spectrogram = lb.feature.chroma_cqt(y=audio, sr=sample_rate)
+    CQT_spectrogram_data.append(CQT_spectrogram)
+
+
+
+plt.figure()
+
+for energy in energy_data:
+    plt.scatter(np.arange(len(energy)), energy, color='blue', alpha=0.5, marker='o', s=10)
+
+plt.figure()
+
+for rms in rms_data:
+    plt.hist(rms.flatten(), bins=20, color='blue', alpha=0.5, edgecolor='black')
+
+
+
 
 """
 
