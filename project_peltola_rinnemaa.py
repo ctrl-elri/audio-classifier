@@ -58,100 +58,164 @@ for tram_sample in tram_samples:
 
 """
 
-print(audio_files)
-# 2. Data conversion to wav file (If necessary, convert to WAV format)
-# This step may not be needed if your audio files are already in WAV format.
-
-# 3. Normalize the data
-# Normalize audio data using librosa or other signal processing libraries.
-normalized_data = []
-for data in audio_files:
-    #data, sr = librosa.load(file)
-    normalized = lb.util.normalize(data)
-    normalized_data.append(normalized)
-
-# 4. Extract time-domain features
-# Extract time-domain features using librosa or other signal processing libraries.
-time_features = []
-for data in normalized_data:
-    # Extract time-domain features (e.g., zero-crossing rate, rms, etc.)
-    # Append features to the time_features list.
-    zero_crossing_rate = lb.feature.zero_crossing_rate(data).ravel()
-    rms = librosa.feature.rms().ravel()
-
-    # Append extracted features to the time_features list
-    time_features.append([zero_crossing_rate, rms])
+tram_samples = get_tram_samples()
+bus_samples = get_bus_samples()
 
 
+# Normalize the data
 
-hop_length = 256
-frame_length = 512
-win_size = int(0.1*fs1)
+normalized_tram = []
+normalized_bus = []
 
-# Extracting time-domain and frequency-domain features
-# Features: energy, RMS, spectrograms, log-spectrograms, mel-spectrograms, logmel-spectrograms, MFCCs, CQT spectrograms
+for sample in tram_samples:
+    normalized = lb.util.normalize(sample[0])
+    normalized_tram.append((normalized, sample[1]))
 
-energy_data = []
-rms_data = []
-spectrogram_data = []
-log_spectrogram_data = []
-mel_spectrogram_data = []
-logmel_spectrogram_data = []
-mfccs_data = []
-CQT_spectrogram_data = []
+for sample in bus_samples:
+    normalized = lb.util.normalize(sample[0])
+    normalized_bus.append((normalized, sample[1]))
 
-for audio in normalized_data:
 
-    # Energy
-    energy = np.array([
-        sum(abs(audio[i:i+frame_length]**2))
-        for i in range(0, len(audio), hop_length)
-    ])
+# Feature: energy
 
-    energy_data.append(energy)
+def get_energy(normalized_data):
 
-    # RMS
-    rms = lb.feature.rms(y=audio)
+    # ???
+    hop_length = 256
+    frame_length = 512
+    win_size = int(0.1*44100)
 
-    rms_data.append(rms)
+    energy_data = []
 
-    # Spectrogram1
-    spectrogram1 = np.abs(librosa.stft(audio, n_fft=win_size))
+    for audio in normalized_data:
 
-    spectrogram_data.append(spectrogram1)
+        signal = audio[0]
+        sample_rate = audio[1]
 
-    # Log-spectrogram1
-    log = 10 * np.log10(spectrogram1)
+        energy = np.array([
+            sum(abs(signal[i:i+frame_length]**2))
+            for i in range(0, len(signal), hop_length)
+        ])
 
-    log_spectrogram_data.append(log)
+        energy_data.append((energy, sample_rate))
+    
+    return energy_data
 
-    """
-    # Spectrogram2
-    sample_rate = 44100
+tram_energy = get_energy(normalized_tram)
+bus_energy = get_energy(normalized_bus)
 
-    f, t, Sxx = spectrogram(audio, fs=sample_rate, nperseg=frame_length, noverlap=hop_length, nfft=win_size)
-    spectrogram_data.append(Sxx)
+"""
+def create_plot(data_set1, data_set2):
+    plt.figure()
 
-    # Log-spectrogram2
-    log_spectrogram = np.log1p(Sxx)
-    log_spectrogram_data.append(log_spectrogram)
-    """
+    for data in data_set1:
+        plt.scatter(data[0], tram_energy[:2], s=10, c='b', marker="s", label='tram')
+        data[0]
+"""
 
-    # Mel-spectrogram
-    mel_spectrogram = lb.feature.melspectrogram(y=audio, sr=sample_rate)
-    mel_spectrogram_data.append(mel_spectrogram)
+second_tram = tram_energy[2]
+second_bus = bus_energy[2]
 
-    # Log-mel-spectrogram
-    logmel_spectrogram = 10*np.log10(mel_spectrogram)
-    logmel_spectrogram_data.append(logmel_spectrogram)
+print(second_tram[0])
+print(second_bus[0])
 
-    # MFCCs
-    mfccs = lb.feature.mfcc(y=audio, sr=sample_rate)
-    mfccs_data.append(mfccs)
+plt.figure()
+plt.hist(second_tram[0], bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
+plt.hist(second_bus[0], bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
 
-    # CQT spectrogram
-    CQT_spectrogram = lb.feature.chroma_cqt(y=audio, sr=sample_rate)
-    CQT_spectrogram_data.append(CQT_spectrogram)
+plt.legend()
+
+third_tram = tram_energy[3]
+third_bus = bus_energy[3]
+
+plt.figure()
+plt.hist(third_tram[0], bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
+plt.hist(third_bus[0], bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
+
+plt.legend()
+
+# Feature: RMS
+
+"""
+
+def get_features(normalized_data):
+
+    # ???
+    hop_length = 256
+    frame_length = 512
+    win_size = int(0.1*44100)
+
+    # Extracting time-domain and frequency-domain features
+    # Features: energy, RMS, spectrograms, log-spectrograms, mel-spectrograms, logmel-spectrograms, MFCCs, CQT spectrograms
+
+    energy_data = []
+    rms_data = []
+    spectrogram_data = []
+    log_spectrogram_data = []
+    mel_spectrogram_data = []
+    logmel_spectrogram_data = []
+    mfccs_data = []
+    CQT_spectrogram_data = []
+
+    for audio in normalized_data:
+
+        signal = audio[0]
+        sample_rate = audio[1]
+
+        # Energy
+        energy = np.array([
+            sum(abs(audio[i:i+frame_length]**2))
+            for i in range(0, len(audio), hop_length)
+        ])
+
+        energy_data.append(energy)
+
+        # RMS
+        rms = lb.feature.rms(y=audio)
+
+        rms_data.append(rms)
+
+        # Spectrogram1
+        spectrogram1 = np.abs(librosa.stft(audio, n_fft=win_size))
+
+        spectrogram_data.append(spectrogram1)
+
+        # Log-spectrogram1
+        log = 10 * np.log10(spectrogram1)
+
+        log_spectrogram_data.append(log)
+
+        
+        
+        # Spectrogram2
+        sample_rate = 44100
+
+        f, t, Sxx = spectrogram(audio, fs=sample_rate, nperseg=frame_length, noverlap=hop_length, nfft=win_size)
+        spectrogram_data.append(Sxx)
+
+        # Log-spectrogram2
+        log_spectrogram = np.log1p(Sxx)
+        log_spectrogram_data.append(log_spectrogram)
+        
+        
+
+        # Mel-spectrogram
+        mel_spectrogram = lb.feature.melspectrogram(y=audio, sr=sample_rate)
+        mel_spectrogram_data.append(mel_spectrogram)
+
+        # Log-mel-spectrogram
+        logmel_spectrogram = 10*np.log10(mel_spectrogram)
+        logmel_spectrogram_data.append(logmel_spectrogram)
+
+        # MFCCs
+        mfccs = lb.feature.mfcc(y=audio, sr=sample_rate)
+        mfccs_data.append(mfccs)
+
+        # CQT spectrogram
+        CQT_spectrogram = lb.feature.chroma_cqt(y=audio, sr=sample_rate)
+        CQT_spectrogram_data.append(CQT_spectrogram)
+    
+
 
 
 
@@ -209,4 +273,4 @@ predictions = svm_classifier.predict(X_test)
 accuracy = accuracy_score(y_test, predictions)
 print("Accuracy:", accuracy)
 
-
+"""
