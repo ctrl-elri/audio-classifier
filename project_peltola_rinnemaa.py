@@ -9,19 +9,6 @@ from scipy.signal import spectrogram
 import matplotlib.pyplot as plt
 import os
 
-# 1. Data collection (Assuming you have a list of audio files)
-# You might use a library like librosa to handle audio data.
-
-""""
-audio1, fs1 = lb.load('tram_samples/Tallenna-001.wav', sr=None)
-audio2, fs2 = lb.load('tramp_samples/Tallenna-002.wav', sr=None)
-audio3, fs3 = lb.load('tram_samples/Tallenna-003.wav', sr=None)
-audio4, fs4 = lb.load('tram_samples/Tallenna-004.wav', sr=None)
-audio5, fs5 = lb.load('tram_samples/Tallenna-005.wav', sr=None)
-audio_files = [audio1, audio2, audio3, audio4, audio5]  # List of paths to audio files
-
-"""
-
 # Reading audio data and storing samples in separate lists
 
 def read_file(file):
@@ -61,6 +48,9 @@ for tram_sample in tram_samples:
 tram_samples = get_tram_samples()
 bus_samples = get_bus_samples()
 
+print(len(tram_samples))
+print(len(bus_samples))
+
 
 # Normalize the data
 
@@ -80,7 +70,7 @@ for sample in bus_samples:
 
 def get_energy(normalized_data):
 
-    # ???
+    # En tiiä onks nää arvot hyvät/täytyyks olla ees hop_length
     hop_length = 256
     frame_length = 512
     win_size = int(0.1*44100)
@@ -104,160 +94,191 @@ def get_energy(normalized_data):
 tram_energy = get_energy(normalized_tram)
 bus_energy = get_energy(normalized_bus)
 
-"""
-def create_plot(data_set1, data_set2):
-    plt.figure()
-
-    for data in data_set1:
-        plt.scatter(data[0], tram_energy[:2], s=10, c='b', marker="s", label='tram')
-        data[0]
-"""
-
-second_tram = tram_energy[2]
-second_bus = bus_energy[2]
-
-print(second_tram[0])
-print(second_bus[0])
-
 plt.figure()
-plt.hist(second_tram[0], bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
-plt.hist(second_bus[0], bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
-
+plt.hist(tram_energy[2][0], bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
+plt.hist(bus_energy[2][0], bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
 plt.legend()
 
-third_tram = tram_energy[3]
-third_bus = bus_energy[3]
 
 plt.figure()
-plt.hist(third_tram[0], bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
-plt.hist(third_bus[0], bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
-
+plt.hist(tram_energy[10][0], bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
+plt.hist(bus_energy[6][0], bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
 plt.legend()
+
 
 # Feature: RMS
 
-"""
+def get_rms(normalized_data):
 
-def get_features(normalized_data):
-
-    # ???
-    hop_length = 256
-    frame_length = 512
-    win_size = int(0.1*44100)
-
-    # Extracting time-domain and frequency-domain features
-    # Features: energy, RMS, spectrograms, log-spectrograms, mel-spectrograms, logmel-spectrograms, MFCCs, CQT spectrograms
-
-    energy_data = []
     rms_data = []
-    spectrogram_data = []
-    log_spectrogram_data = []
-    mel_spectrogram_data = []
-    logmel_spectrogram_data = []
-    mfccs_data = []
-    CQT_spectrogram_data = []
 
     for audio in normalized_data:
 
         signal = audio[0]
         sample_rate = audio[1]
 
-        # Energy
-        energy = np.array([
-            sum(abs(audio[i:i+frame_length]**2))
-            for i in range(0, len(audio), hop_length)
-        ])
+        rms = lb.feature.rms(y=signal)
+        rms_data.append((rms, sample_rate))
 
-        energy_data.append(energy)
+    return rms_data
 
-        # RMS
-        rms = lb.feature.rms(y=audio)
+tram_rms = get_rms(normalized_tram)
+bus_rms = get_rms(normalized_bus)
 
-        rms_data.append(rms)
+plt.figure()
+plt.hist(tram_rms[10][0].flatten(), bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
+plt.hist(bus_rms[6][0].flatten(), bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
+plt.legend()
 
-        # Spectrogram1
-        spectrogram1 = np.abs(librosa.stft(audio, n_fft=win_size))
 
-        spectrogram_data.append(spectrogram1)
 
-        # Log-spectrogram1
-        log = 10 * np.log10(spectrogram1)
+# For spectrograms
 
+def plot_spectrogram (spec, if_truncate=False):
+    sr = 44100
+    plt.figure(figsize=(14, 6), dpi= 80, facecolor='w', edgecolor='k')
+    plt.imshow(spec,origin='lower',aspect='auto')
+    locs, labels = plt.xticks()
+    locs_=[np.round((i/locs[-1]*len(spec)/sr),decimals=1) for i in locs]
+    plt.xticks(locs[1:-1], locs_[1:-1])
+    locs, labels = plt.yticks()
+    if if_truncate:
+      locs_=[int((i/locs[-1]*sr//16)) for i in locs]   # truncate the plot by a factor of 8
+    else:
+      locs_=[int((i/locs[-1]*sr//2)) for i in locs]
+    plt.yticks(locs[1:-1], locs_[1:-1])
+    plt.xlabel('Time (s)')
+    plt.ylabel('Fre (Hz)')
+
+
+
+# Feature: spectrogram and log spectrogram
+
+def get_spectrogram(normalized_data):
+
+    spectrogram_data = []
+    log_spectrogram_data = []
+
+    for audio in normalized_data:
+
+        signal = audio[0]
+        sample_rate = audio[1]
+
+        spectrogram = np.abs(lb.stft(signal, n_fft=512))
+        spectrogram_data.append(spectrogram)
+
+        log = 10 * np.log10(spectrogram)
         log_spectrogram_data.append(log)
 
-        
-        
-        # Spectrogram2
-        sample_rate = 44100
+    return spectrogram_data, log_spectrogram_data
 
-        f, t, Sxx = spectrogram(audio, fs=sample_rate, nperseg=frame_length, noverlap=hop_length, nfft=win_size)
-        spectrogram_data.append(Sxx)
 
-        # Log-spectrogram2
-        log_spectrogram = np.log1p(Sxx)
-        log_spectrogram_data.append(log_spectrogram)
-        
-        
+tram_spec, tram_logspec = get_spectrogram(normalized_tram)
+bus_spec, bus_logspec = get_spectrogram(normalized_bus)
 
-        # Mel-spectrogram
-        mel_spectrogram = lb.feature.melspectrogram(y=audio, sr=sample_rate)
+# Ei toimi nää plottaukset
+"""
+plot_spectrogram(tram_spec[6][0])
+plot_spectrogram(tram_logspec[6][0])
+
+plot_spectrogram(bus_spec[6][0])
+plot_spectrogram(bus_logspec[6][0])
+"""
+
+# Feature: mel-spectrograms and logmel-spectrograms
+
+def get_mel_spectrogram(normalized_data):
+
+    mel_spectrogram_data = []
+    logmel_spectrogram_data = []
+
+    for audio in normalized_data:
+
+        signal = audio[0]
+        sample_rate = audio[1]
+
+        mel_spectrogram = lb.feature.melspectrogram(y=signal, sr=sample_rate)
         mel_spectrogram_data.append(mel_spectrogram)
 
-        # Log-mel-spectrogram
         logmel_spectrogram = 10*np.log10(mel_spectrogram)
         logmel_spectrogram_data.append(logmel_spectrogram)
 
-        # MFCCs
-        mfccs = lb.feature.mfcc(y=audio, sr=sample_rate)
-        mfccs_data.append(mfccs)
+    return mel_spectrogram_data, logmel_spectrogram_data
 
-        # CQT spectrogram
-        CQT_spectrogram = lb.feature.chroma_cqt(y=audio, sr=sample_rate)
-        CQT_spectrogram_data.append(CQT_spectrogram)
+
+tram_melspec, tram_logmelspec = get_mel_spectrogram(normalized_tram)
+bus_melspec, bus_logmelspec = get_mel_spectrogram(normalized_bus)
+
+
+# Eikä nämäkään
+"""
+plot_spectrogram(tram_melspec[6][0])
+plot_spectrogram(tram_logmelspec[6][0])
+
+plot_spectrogram(bus_melspec[6][0])
+plot_spectrogram(bus_logmelspec[6][0])
+"""
+
+
+# Feature: MFCC
+
+def get_mfcc(normalized_data):
+
+    mfccs_data = []
+
+    for audio in normalized_data:
+
+        signal = audio[0]
+        sample_rate = audio[1]
+        
+        mfccs = lb.feature.mfcc(y=signal, sr=sample_rate)
+        mfccs_data.append((mfccs, sample_rate))
     
+    return mfccs_data
 
 
+tram_mfccs = get_mfcc(normalized_tram)
+bus_mfccs = get_mfcc(normalized_bus)
+
+plot_spectrogram(tram_mfccs[6][0])
+plot_spectrogram(bus_mfccs[6][0])
 
 
-plt.figure()
+# Feature: CQT spectrogram
 
-for energy in energy_data:
-    plt.scatter(np.arange(len(energy)), energy, color='blue', alpha=0.5, marker='o', s=10)
+def get_cqt(normalized_data):
 
-plt.figure()
+    cqt_data = []
 
-for rms in rms_data:
-    plt.hist(rms.flatten(), bins=20, color='blue', alpha=0.5, edgecolor='black')
+    for audio in normalized_data:
+
+        signal = audio[0]
+        sample_rate = audio[1]
+        
+        cqt_spectrogram = lb.feature.chroma_cqt(y=signal, sr=sample_rate)
+        cqt_data.append(cqt_spectrogram)
+    
+    return cqt_data
 
 
-# 5. Extract frequency-domain features
-# Use Fourier Transform to convert data to frequency domain and extract features.
-frequency_features = []
-for data in normalized_data:
-    # Apply Fourier Transform and extract frequency-domain features
-    # Append features to the frequency_features list.
-    stft = np.abs(librosa.stft(data))
+tram_cqts = get_cqt(normalized_tram)
+bus_cqts = get_cqt(normalized_bus)
 
-    # Extracting frequency-domain features (e.g., spectral centroid, bandwidth)
-    spectral_centroids = librosa.feature.spectral_centroid(S=stft).ravel()
-    spectral_bandwidth = librosa.feature.spectral_bandwidth(S=stft).ravel()
+# Eikä muuten tässäkään
+#plot_spectrogram(tram_cqts[6][0])
+#plot_spectrogram(bus_cqts[6][0])
 
-    # Append extracted features to the frequency_features list
-    frequency_features.append([spectral_centroids, spectral_bandwidth])
 
-# 6. Plot spectrograms and MFCC from some of the files and compare them
-# Use matplotlib or other plotting libraries to visualize spectrograms and MFCC.
-# This requires computing Mel-frequency cepstral coefficients (MFCC) and spectrograms.
-# Compare and plot them to observe differences.
 
 # 7. Implement the classifier (Choose a machine learning model)
 
 
 # Prepare feature matrix
-X = []  # Combine time and frequency features into X
-y = [...]  # Labels for your data
+X = []  # Combine time and frequency features into X tähän bus ja tram mfcc yhteen (tai joku muu feature)
+y = [...]  # Labels for your data tähän ne nimet eli onko bussi vai ratikka
 
-# Split the data into training and testing sets
+# Split the data into training and testing sets tää on vissiin joku valmis splittausfunktio?
+# data = X tossa ylempänä ja labels = y
 X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
 
 # Create SVM classifier
@@ -273,4 +294,4 @@ predictions = svm_classifier.predict(X_test)
 accuracy = accuracy_score(y_test, predictions)
 print("Accuracy:", accuracy)
 
-"""
+
