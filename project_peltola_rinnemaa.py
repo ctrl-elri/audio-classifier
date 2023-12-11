@@ -37,14 +37,6 @@ def get_tram_samples():
     return tram_samp
 
 
-
-"""
-Jos nyt haluut pelkän datan noista tram_sampleista niinku audio_files, niin se menee jotakuinkin näin:
-for tram_sample in tram_samples:
-    audio_files.append(tram_sample[0])
-
-"""
-
 tram_samples = get_tram_samples()
 bus_samples = get_bus_samples()
 
@@ -134,8 +126,8 @@ plt.legend()
 
 # For spectrograms
 
-def plot_spectrogram (spec, if_truncate=False):
-    sr = 44100
+def plot_spectrogram(spec, sample_rate, if_truncate=False):
+    sr = sample_rate
     plt.figure(figsize=(14, 6), dpi= 80, facecolor='w', edgecolor='k')
     plt.imshow(spec,origin='lower',aspect='auto')
     locs, labels = plt.xticks()
@@ -176,14 +168,14 @@ def get_spectrogram(normalized_data):
 tram_spec, tram_logspec = get_spectrogram(normalized_tram)
 bus_spec, bus_logspec = get_spectrogram(normalized_bus)
 
-# Ei toimi nää plottaukset
-"""
-plot_spectrogram(tram_spec[6][0])
-plot_spectrogram(tram_logspec[6][0])
+# Ei toimi nää plottaukset 
 
-plot_spectrogram(bus_spec[6][0])
-plot_spectrogram(bus_logspec[6][0])
-"""
+plot_spectrogram(tram_spec[6], sample_rate=tram_samples[6][1])
+plot_spectrogram(tram_logspec[6], sample_rate=tram_samples[6][1])
+
+plot_spectrogram(bus_spec[6], sample_rate=bus_samples[6][1])
+plot_spectrogram(bus_logspec[6], sample_rate=bus_samples[6][1])
+
 
 # Feature: mel-spectrograms and logmel-spectrograms
 
@@ -211,13 +203,13 @@ bus_melspec, bus_logmelspec = get_mel_spectrogram(normalized_bus)
 
 
 # Eikä nämäkään
-"""
-plot_spectrogram(tram_melspec[6][0])
-plot_spectrogram(tram_logmelspec[6][0])
 
-plot_spectrogram(bus_melspec[6][0])
-plot_spectrogram(bus_logmelspec[6][0])
-"""
+plot_spectrogram(tram_melspec[6], sample_rate=tram_samples[6][1])
+plot_spectrogram(tram_logmelspec[6], sample_rate=tram_samples[6][1])
+
+plot_spectrogram(bus_melspec[6], sample_rate=bus_samples[6][1])
+plot_spectrogram(bus_logmelspec[6], sample_rate=bus_samples[6][1])
+
 
 
 # Feature: MFCC
@@ -240,8 +232,8 @@ def get_mfcc(normalized_data):
 tram_mfccs = get_mfcc(normalized_tram)
 bus_mfccs = get_mfcc(normalized_bus)
 
-plot_spectrogram(tram_mfccs[6][0])
-plot_spectrogram(bus_mfccs[6][0])
+plot_spectrogram(tram_mfccs[6][0], sample_rate=tram_samples[6][1])
+plot_spectrogram(bus_mfccs[6][0], sample_rate=bus_samples[6][1])
 
 
 # Feature: CQT spectrogram
@@ -265,33 +257,45 @@ tram_cqts = get_cqt(normalized_tram)
 bus_cqts = get_cqt(normalized_bus)
 
 # Eikä muuten tässäkään
-#plot_spectrogram(tram_cqts[6][0])
-#plot_spectrogram(bus_cqts[6][0])
+plot_spectrogram(tram_cqts[6], sample_rate=tram_samples[6][1])
+plot_spectrogram(bus_cqts[6], sample_rate=bus_samples[6][1])
 
 
 
-# 7. Implement the classifier (Choose a machine learning model)
+# Function to pad MFCCs to a fixed size
+def pad_mfccs(mfccs_data, pad_size):
+    padded_data = []
+    for mfccs, _ in mfccs_data:
+        pad_width = max(0, pad_size - mfccs.shape[1])
+        mfccs_padded = np.pad(mfccs, pad_width=((0,0), (0,pad_width)), mode='constant')
+        padded_data.append(mfccs_padded.flatten()[:pad_size])
+    return padded_data
+
+# Determine the maximum size needed for padding
+max_size = max(max(mfccs.shape[1] for mfccs, _ in tram_mfccs),
+               max(mfccs.shape[1] for mfccs, _ in bus_mfccs))
+
+padded_tram_mfccs = pad_mfccs(tram_mfccs, max_size)
+padded_bus_mfccs = pad_mfccs(bus_mfccs, max_size)
+
+# Labeling
+tram_labels = [0] * len(padded_tram_mfccs)
+bus_labels = [1] * len(padded_bus_mfccs)
 
 
-# Prepare feature matrix
-X = []  # Combine time and frequency features into X tähän bus ja tram mfcc yhteen (tai joku muu feature)
-y = [...]  # Labels for your data tähän ne nimet eli onko bussi vai ratikka
+X = padded_bus_mfccs + padded_tram_mfccs  
+y = tram_labels + bus_labels 
 
-# Split the data into training and testing sets tää on vissiin joku valmis splittausfunktio?
-# data = X tossa ylempänä ja labels = y
-X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
+# Train SVM
+X = np.array(X)
+y = np.array(y)
 
-# Create SVM classifier
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
 svm_classifier = SVC(kernel='linear')
-
-# Train the SVM classifier
 svm_classifier.fit(X_train, y_train)
 
-# Make predictions on the test set
 predictions = svm_classifier.predict(X_test)
-
-# Calculate accuracy
 accuracy = accuracy_score(y_test, predictions)
 print("Accuracy:", accuracy)
-
 
