@@ -10,6 +10,7 @@ import soundfile as sf
 from scipy.signal import spectrogram
 import matplotlib.pyplot as plt
 
+# Class to handle repetitive operations
 class AudioProcessor:
     def __init__(self, hop_length=256, frame_length=512):
         self.hop_length = hop_length
@@ -74,8 +75,6 @@ class AudioProcessor:
         return padded_data
     
     
-
-# Example usage
 processor = AudioProcessor()
 train_bus = processor.read_files_from_folder('37007__aleksin__bussound')
 train_tram = processor.read_files_from_folder('36822__hnminh__tram_class')
@@ -218,6 +217,8 @@ plot_spectrogram(tram_logmelspec[6], sample_rate=test_tram[6][1])
 plot_spectrogram(bus_melspec[6], sample_rate=test_bus[6][1])
 plot_spectrogram(bus_logmelspec[6], sample_rate=test_bus[6][1])
 
+# Feature MFCC
+
 tram_mfccs_test = processor.get_mfcc(norm_test_tram)
 bus_mfccs_test = processor.get_mfcc(norm_test_bus)
 tram_mfccs_train = processor.get_mfcc(norm_train_tram)
@@ -253,6 +254,8 @@ bus_cqts = get_cqt(norm_test_bus)
 # Eikä muuten tässäkään
 plot_spectrogram(tram_cqts[6], sample_rate=test_tram[6][1])
 plot_spectrogram(bus_cqts[6], sample_rate=test_bus[6][1])
+
+# Padding MFCCs
 
 # Determine the maximum size needed for padding
 max_size = max(max(mfccs.shape[1] for mfccs, _ in tram_mfccs_test),
