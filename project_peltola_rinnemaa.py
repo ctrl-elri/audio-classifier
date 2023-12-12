@@ -2,7 +2,7 @@ import numpy as np
 import librosa as lb
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC 
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 import sounddevice as sd
 import soundfile as sf
 from scipy.signal import spectrogram
@@ -39,9 +39,6 @@ def get_tram_samples():
 
 tram_samples = get_tram_samples()
 bus_samples = get_bus_samples()
-
-print(len(tram_samples))
-print(len(bus_samples))
 
 
 # Normalize the data
@@ -295,7 +292,15 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 svm_classifier = SVC(kernel='linear')
 svm_classifier.fit(X_train, y_train)
 
+
+# Evaluate
 predictions = svm_classifier.predict(X_test)
 accuracy = accuracy_score(y_test, predictions)
-print("Accuracy:", accuracy)
+tn, fp, fn, tp = confusion_matrix(y_test, predictions).ravel()
+precision_score = tp / (tp + fp)
+recall_score = tp / (tp + fn)
+
+print("Accuracy: " + "{:.2f}".format(accuracy))
+print("Precision: " + "{:.2f}".format(precision_score))
+print("Recall score:", recall_score)
 
