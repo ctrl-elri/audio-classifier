@@ -10,6 +10,10 @@ import soundfile as sf
 from scipy.signal import spectrogram
 import matplotlib.pyplot as plt
 
+#
+# TO-DO: Plottaukset, raportti, outputin warningien korjaaminen
+#
+
 # Class to handle repetitive operations
 class AudioProcessor:
     def __init__(self, hop_length=256, frame_length=512):
@@ -166,7 +170,7 @@ def get_spectrogram(normalized_data):
         spectrogram = np.abs(lb.stft(signal, n_fft=512))
         spectrogram_data.append(spectrogram)
 
-        log = 10 * np.log10(spectrogram)
+        log = 10 * np.log10(spectrogram + 1e-10)  # Adding a small constant to avoid log(0)
         log_spectrogram_data.append(log)
 
     return spectrogram_data, log_spectrogram_data
@@ -199,7 +203,7 @@ def get_mel_spectrogram(normalized_data):
         mel_spectrogram = lb.feature.melspectrogram(y=signal, sr=sample_rate)
         mel_spectrogram_data.append(mel_spectrogram)
 
-        logmel_spectrogram = 10*np.log10(mel_spectrogram)
+        logmel_spectrogram = 10*np.log10(mel_spectrogram + 1e-10)
         logmel_spectrogram_data.append(logmel_spectrogram)
 
     return mel_spectrogram_data, logmel_spectrogram_data
