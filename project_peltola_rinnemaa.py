@@ -11,7 +11,7 @@ from scipy.signal import spectrogram
 import matplotlib.pyplot as plt
 
 #
-# TO-DO: Plottaukset, raportti, outputin warningien korjaaminen
+# TO-DO: Plottaukset, raportti
 #
 
 # Class to handle repetitive operations
@@ -287,10 +287,21 @@ X_val, y_val = label_data(padded_bus_mfccs_val, padded_tram_mfccs_val, 1, 0)
 X_test, y_test = label_data(padded_bus_mfccs_test, padded_tram_mfccs_test, 1, 0)
 
 
-svm_classifier = SVC(kernel='linear')
+svm_classifier = SVC(kernel='poly')
 svm_classifier.fit(X_train, y_train)
 
-# Validation evaluation
+# Evaluating on training set
+train_predictions = svm_classifier.predict(X_train)
+train_accuracy = accuracy_score(y_train, train_predictions)
+tn, fp, fn, tp = confusion_matrix(y_train, train_predictions).ravel()
+train_precision_score = tp / (tp + fp)
+train_recall_score = tp / (tp + fn)
+
+print("Training Accuracy: " + "{:.2f}".format(train_accuracy))
+print("Training Precision: " + "{:.2f}".format(train_precision_score))
+print("Training Recall score: " + "{:.2f}".format(train_recall_score))
+
+# Evaluating on validation set
 val_predictions = svm_classifier.predict(X_val)
 val_accuracy = accuracy_score(y_val, val_predictions)
 val_tn, val_fp, val_fn, val_tp = confusion_matrix(y_val, val_predictions).ravel()
