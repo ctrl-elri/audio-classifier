@@ -82,8 +82,10 @@ class AudioProcessor:
 processor = AudioProcessor()
 train_bus = processor.read_files_from_folder('37007__aleksin__bussound')
 train_tram = processor.read_files_from_folder('36822__hnminh__tram_class')
+
 val_bus = processor.read_files_from_folder('39926__thespicychip__tampere_bus_audio_data')
 val_tram = processor.read_files_from_folder('39927__thespicychip__tampere_tram_audio_data')
+
 test_bus = processor.read_files_from_folder('bus_samples')
 test_tram = processor.read_files_from_folder('tram_samples')
 
@@ -100,14 +102,20 @@ tram_energy = processor.get_energy(norm_test_tram)
 bus_energy = processor.get_energy(norm_test_bus)
 
 plt.figure()
-plt.hist(tram_energy[2][0], bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
-plt.hist(bus_energy[2][0], bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
+plt.hist(tram_energy[2], bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
+plt.hist(bus_energy[2], bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
+plt.title('Energy: tram sample 3, bus sample 3')
+plt.xlabel('Energy')
+plt.ylabel('Frequency')
 plt.legend()
 
 
 plt.figure()
-plt.hist(tram_energy[10][0], bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
-plt.hist(bus_energy[6][0], bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
+plt.hist(tram_energy[10], bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
+plt.hist(bus_energy[6], bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
+plt.title('Energy: tram sample 11, bus sample 7')
+plt.xlabel('Energy')
+plt.ylabel('Frequency')
 plt.legend()
 
 
@@ -133,10 +141,13 @@ bus_rms = get_rms(norm_test_bus)
 plt.figure()
 plt.hist(tram_rms[10][0].flatten(), bins=20, color='red', edgecolor='black', alpha=0.7, label='Tram')
 plt.hist(bus_rms[6][0].flatten(), bins=20, color='blue', edgecolor='black', alpha=0.7, label='Bus')
+plt.title('RMS: tram sample 11, bus sample 7')
+plt.xlabel('RMS Value')
+plt.ylabel('Frequency')
 plt.legend()
 
 # For spectrograms
-
+"""
 def plot_spectrogram(spec, sample_rate, if_truncate=False):
     sr = sample_rate
     plt.figure(figsize=(14, 6), dpi= 80, facecolor='w', edgecolor='k')
@@ -152,7 +163,7 @@ def plot_spectrogram(spec, sample_rate, if_truncate=False):
     plt.yticks(locs[1:-1], locs_[1:-1])
     plt.xlabel('Time (s)')
     plt.ylabel('Fre (Hz)')
-
+"""
 
 
 # Feature: spectrogram and log spectrogram
@@ -179,15 +190,40 @@ def get_spectrogram(normalized_data):
 tram_spec, tram_logspec = get_spectrogram(norm_test_tram)
 bus_spec, bus_logspec = get_spectrogram(norm_test_bus)
 
-# Ei toimi nää plottaukset 
+plt.figure(figsize=(15,10))
 
-plot_spectrogram(tram_spec[6], sample_rate=test_tram[6][1])
-plot_spectrogram(tram_logspec[6], sample_rate=test_tram[6][1])
+plt.subplot(4,1,1)
+lb.display.specshow(lb.amplitude_to_db(tram_spec[6], ref=np.max), sr=test_tram[6][1], y_axis='hz', x_axis='time')
+plt.title('Spectrogram, Tram sample 7')
+plt.colorbar(format='%+2.0f dB')
+plt.xlabel('Time')
+plt.ylabel('Hz')
 
-plot_spectrogram(bus_spec[6], sample_rate=test_bus[6][1])
-plot_spectrogram(bus_logspec[6], sample_rate=test_bus[6][1])
+plt.subplot(4,1,2)
+lb.display.specshow(lb.amplitude_to_db(bus_spec[6], ref=np.max), sr=test_bus[6][1], y_axis='hz', x_axis='time')
+plt.title('Spectrogram, Bus sample 7')
+plt.colorbar(format='%+2.0f dB')
+plt.xlabel('Time')
+plt.ylabel('Hz')
+
+plt.subplot(4,1,3)
+lb.display.specshow(lb.amplitude_to_db(tram_logspec[6], ref=np.max), sr=test_tram[6][1], y_axis='hz', x_axis='time')
+plt.title('Log-spectrogram, Tram sample 7')
+plt.colorbar(format='%+2.0f dB')
+plt.xlabel('Time')
+plt.ylabel('Hz')
+
+plt.subplot(4,1,4)
+lb.display.specshow(lb.amplitude_to_db(bus_logspec[6], ref=np.max), sr=test_bus[6][1], y_axis='hz', x_axis='time')
+plt.title('Log-spectrogram, Bus sample 7')
+plt.colorbar(format='%+2.0f dB')
+plt.xlabel('Time')
+plt.ylabel('Hz')
+
+plt.tight_layout()
 
 
+"""
 # Feature: mel-spectrograms and logmel-spectrograms
 
 def get_mel_spectrogram(normalized_data):
@@ -221,6 +257,7 @@ plot_spectrogram(tram_logmelspec[6], sample_rate=test_tram[6][1])
 plot_spectrogram(bus_melspec[6], sample_rate=test_bus[6][1])
 plot_spectrogram(bus_logmelspec[6], sample_rate=test_bus[6][1])
 
+"""
 # Feature MFCC
 
 tram_mfccs_test = processor.get_mfcc(norm_test_tram)
@@ -230,11 +267,26 @@ bus_mfccs_train = processor.get_mfcc(norm_train_bus)
 tram_mfccs_val = processor.get_mfcc(norm_val_tram)
 bus_mfccs_val = processor.get_mfcc(norm_val_bus)
 
-
-plot_spectrogram(tram_mfccs_test[6][0], sample_rate=test_tram[6][1])
-plot_spectrogram(bus_mfccs_test[6][0], sample_rate=test_bus[6][1])
+print(len(tram_mfccs_test[6][0]), ', ', len(bus_mfccs_test[6][0]))
 
 
+
+
+plt.figure(figsize=(10,8))
+plt.subplot(2,1,1)
+lb.display.specshow(tram_mfccs_test[6][0], x_axis='time')
+plt.title('MFCC, Tram sample 7')
+plt.xlabel('Time')
+
+plt.subplot(2,1,2)
+lb.display.specshow(bus_mfccs_test[6][0], x_axis='time')
+plt.title('MFCC, Bus sample 7')
+plt.xlabel('Time')
+
+plt.tight_layout()
+
+
+"""
 # Feature: CQT spectrogram
 
 def get_cqt(normalized_data):
@@ -258,6 +310,9 @@ bus_cqts = get_cqt(norm_test_bus)
 # Eikä muuten tässäkään
 plot_spectrogram(tram_cqts[6], sample_rate=test_tram[6][1])
 plot_spectrogram(bus_cqts[6], sample_rate=test_bus[6][1])
+
+
+"""
 
 # Padding MFCCs
 
