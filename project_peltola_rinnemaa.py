@@ -10,9 +10,6 @@ import soundfile as sf
 from scipy.signal import spectrogram
 import matplotlib.pyplot as plt
 
-#
-# TO-DO: Plottaukset, raportti
-#
 
 # Class to handle repetitive operations
 class AudioProcessor:
@@ -80,6 +77,8 @@ class AudioProcessor:
     
     
 processor = AudioProcessor()
+
+# Read audio samples to training, validation and testing data sets
 train_bus = processor.read_files_from_folder('training_bus')
 train_tram = processor.read_files_from_folder('training_tram')
 
@@ -89,6 +88,7 @@ val_tram = processor.read_files_from_folder('39927__thespicychip__tampere_tram_a
 test_bus = processor.read_files_from_folder('bus_samples')
 test_tram = processor.read_files_from_folder('tram_samples')
 
+# Normalize the data sets
 norm_train_bus = processor.normalize_sample(train_bus)
 norm_train_tram = processor.normalize_sample(train_tram)
 norm_val_bus = processor.normalize_sample(val_bus)
@@ -97,6 +97,7 @@ norm_test_bus = processor.normalize_sample(test_bus)
 norm_test_tram = processor.normalize_sample(test_tram)
 
 
+# Feature extraction
 
 # Feature: energy
 
@@ -141,7 +142,7 @@ plt.legend()
 
 
 
-# Feature: spectrogram and log spectrogram
+# Feature: Spectrogram
 
 def get_spectrogram(normalized_data):
 
@@ -185,41 +186,6 @@ plt.ylabel('Hz')
 plt.tight_layout()
 
 
-"""
-# Feature: mel-spectrograms and logmel-spectrograms
-
-def get_mel_spectrogram(normalized_data):
-
-    mel_spectrogram_data = []
-    logmel_spectrogram_data = []
-
-    for audio in normalized_data:
-
-        signal = audio[0]
-        sample_rate = audio[1]
-
-        mel_spectrogram = lb.feature.melspectrogram(y=signal, sr=sample_rate)
-        mel_spectrogram_data.append(mel_spectrogram)
-
-        logmel_spectrogram = 10*np.log10(mel_spectrogram + 1e-10)
-        logmel_spectrogram_data.append(logmel_spectrogram)
-
-    return mel_spectrogram_data, logmel_spectrogram_data
-
-
-tram_melspec, tram_logmelspec = get_mel_spectrogram(norm_test_tram)
-bus_melspec, bus_logmelspec = get_mel_spectrogram(norm_test_tram)
-
-
-# Eikä nämäkään
-
-plot_spectrogram(tram_melspec[6], sample_rate=test_tram[6][1])
-plot_spectrogram(tram_logmelspec[6], sample_rate=test_tram[6][1])
-
-plot_spectrogram(bus_melspec[6], sample_rate=test_bus[6][1])
-plot_spectrogram(bus_logmelspec[6], sample_rate=test_bus[6][1])
-
-"""
 # Feature MFCC
 
 tram_mfccs_test = processor.get_mfcc(norm_test_tram)
@@ -296,7 +262,7 @@ padded_tram_mfccs_val = processor.pad_mfccs(tram_mfccs_val, max_size)
 padded_bus_mfccs_val = processor.pad_mfccs(bus_mfccs_val, max_size)
 
 
-# Labeling
+# Labeling function
 def label_data(bus_data, tram_data, bus_label, tram_label):
     bus_labels = [bus_label] * len(bus_data)
     tram_labels = [tram_label] * len(tram_data)
@@ -309,7 +275,7 @@ X_train, y_train = label_data(padded_bus_mfccs_train, padded_tram_mfccs_train, 1
 X_val, y_val = label_data(padded_bus_mfccs_val, padded_tram_mfccs_val, 1, 0)
 X_test, y_test = label_data(padded_bus_mfccs_test, padded_tram_mfccs_test, 1, 0)
 
-
+# Classifier
 svm_classifier = SVC(kernel='poly')
 svm_classifier.fit(X_train, y_train)
 
